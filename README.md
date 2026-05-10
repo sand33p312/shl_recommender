@@ -31,31 +31,39 @@ Open `http://localhost:8000/docs` for the interactive Swagger UI.
 ## API
 
 ### `GET /health`
-Readiness check. Returns `{"status": "ok"}` with HTTP 200.
+```bash
+curl http://localhost:8000/health
+```
+Returns `{"status": "ok"}`
 
 ### `POST /chat`
 
-**Request**
-```json
-{
-  "messages": [
-    {"role": "user", "content": "I am hiring a mid-level Java developer"},
-    {"role": "assistant", "content": "What's the seniority level?"},
-    {"role": "user", "content": "Mid-level, about 4 years experience"}
-  ]
-}
+**Vague query (will ask clarifying question):**
+```bash
+curl -X POST http://localhost:8000/chat \
+  -H "Content-Type: application/json" \
+  -d '{"messages": [{"role": "user", "content": "I need an assessment"}]}'
 ```
 
-**Response**
-```json
-{
-  "reply": "Here are 5 assessments that fit a mid-level Java developer.",
-  "recommendations": [
-    {"name": "Java 8 (New)", "url": "https://www.shl.com/...", "test_type": "K"},
-    {"name": "OPQ32r", "url": "https://www.shl.com/...", "test_type": "P"}
-  ],
-  "end_of_conversation": false
-}
+**Clear query (returns recommendations):**
+```bash
+curl -X POST http://localhost:8000/chat \
+  -H "Content-Type: application/json" \
+  -d '{"messages": [{"role": "user", "content": "I am hiring a mid-level Java developer"}]}'
+```
+
+**Multi-turn refinement:**
+```bash
+curl -X POST http://localhost:8000/chat \
+  -H "Content-Type: application/json" \
+  -d '{"messages": [{"role": "user", "content": "I am hiring a Java developer"}, {"role": "assistant", "content": "What level?"}, {"role": "user", "content": "Senior, also add personality test"}]}'
+```
+
+**Compare two assessments:**
+```bash
+curl -X POST http://localhost:8000/chat \
+  -H "Content-Type: application/json" \
+  -d '{"messages": [{"role": "user", "content": "Compare OPQ32r and Numerical Reasoning"}]}'
 ```
 
 - `recommendations` is `[]` while clarifying or refusing.
@@ -111,7 +119,7 @@ See `approach_document.pdf` (or `approach_document.md`) for the full 2-page writ
 
 | Decision | Choice | Rationale |
 |---|---|---|
-| LLM | Gemini 1.5 Flash | Free tier, ~1-2s latency, fits 30s timeout |
+| LLM | gemini-flash-latest | Free tier, ~1–2s latency, 1M context window |
 | Retrieval | TF-IDF (numpy) | No heavy deps, deterministic, debuggable |
 | Framework | Raw FastAPI | Shows genuine understanding over LangChain abstraction |
 | State | Fully stateless | Caller owns history; simpler ops |
